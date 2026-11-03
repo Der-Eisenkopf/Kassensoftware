@@ -37,7 +37,12 @@ public class ProduktSpeicher
 	{
 		if (pEAN == null || !pEAN.matches("\\d{13}"))
 		{
-			throw new IllegalArgumentException("Die EAN muss aus 13 Ziffern bestehen.");
+			if (pEAN.matches("\\d{8}")) {
+				pEAN = "00000" + pEAN;
+			}
+			else {
+				throw new IllegalArgumentException("Die EAN muss aus genau 8 oder genau 13 Ziffern bestehen.");
+			}
 		}
 		String sql = "SELECT EAN, bezeichnung, nettopreis, basiseinheit, umsatzsteuersatz FROM produkt WHERE EAN = ?";
 		try (Connection con = verbinden(); PreparedStatement ps = con.prepareStatement(sql))

@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
 import javax.swing.JButton;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -25,8 +26,11 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	private JLabel lblSuchleiste;
 	private JButton btnBuchen;
 	
+	private JLabel lblEinleitung;
+	
 	private JTable tblPositionen;
 	private DefaultTableModel mdlPositionen;
+	private JScrollPane scrollTblPositionen;
 	
 	private JLabel lblPositionKontrolle;
 	private JButton btnPositionMengeMinus;
@@ -165,6 +169,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
         };
 
         tblPositionen = new JTable(mdlPositionen);
+        tblPositionen.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tblPositionen.getColumnModel().getColumn(0).setPreferredWidth(150);
         tblPositionen.getColumnModel().getColumn(1).setPreferredWidth(200);
         tblPositionen.getColumnModel().getColumn(2).setPreferredWidth(150);
@@ -190,13 +195,17 @@ public class BenutzerschnittstelleKasse extends JFrame {
         //tblPositionen.setBounds(10, 10, 400, 100);
         //tblPositionen.setLayout(null);
 
-        JScrollPane scrollPane = new JScrollPane(tblPositionen);
+        scrollTblPositionen = new JScrollPane(tblPositionen);
         
-        scrollPane.setBounds(60, 100, 600, 340);
+        scrollTblPositionen.setBounds(60, 100, 600, 340);
         //scrollPane.setLayout(null);
         
         //pnlPositionen.add(tblPositionen);
-        contentPane.add(scrollPane);
+        contentPane.add(scrollTblPositionen);
+        
+        lblEinleitung = new JLabel("Scannen Sie ein Produkt, um mit der Kassiervorgang loszulegen.");
+        lblEinleitung.setBounds(60, 100, 600, 20);
+		contentPane.add(lblEinleitung);
         
         btnTransaktionZuruecksetzen = new JButton("Transaktion zurücksetzen");
         btnTransaktionZuruecksetzen.setBounds(685, 220, 200, 30);
@@ -225,6 +234,8 @@ public class BenutzerschnittstelleKasse extends JFrame {
                 }
             }
         });
+        
+        schalteSichtbarkeitUm(false);
         
 	}
 	
@@ -350,12 +361,35 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	
 	private void zeigeGebuchtePositionen(int pZeileZumAuswaehlen) {
 		mdlPositionen.setRowCount(0);
-		for (int i = 0; i < dieSteuerung.ermittleTransaktionGroesse(); i++) {
-			mdlPositionen.addRow(dieSteuerung.ermittleGebuchtePositiondatenAlsTabellenzeile(i));
+		if (dieSteuerung.ermittleTransaktionGroesse() > 0) {
+			schalteSichtbarkeitUm(true);
+			for (int i = 0; i < dieSteuerung.ermittleTransaktionGroesse(); i++) {
+				mdlPositionen.addRow(dieSteuerung.ermittleGebuchtePositiondatenAlsTabellenzeile(i));
+			}
+			if (pZeileZumAuswaehlen >= 0) {
+				tblPositionen.setRowSelectionInterval(pZeileZumAuswaehlen, pZeileZumAuswaehlen);
+			}
 		}
-		if (pZeileZumAuswaehlen >= 0) {
-			tblPositionen.setRowSelectionInterval(pZeileZumAuswaehlen, pZeileZumAuswaehlen);
+		else  {
+			schalteSichtbarkeitUm(false);
 		}
+	}
+	
+	private void schalteSichtbarkeitUm(boolean angezeigt) {
+		lblEinleitung.setVisible(!angezeigt);
+		scrollTblPositionen.setVisible(angezeigt);
+		btnPositionMengeMinus.setVisible(angezeigt);
+		btnPositionMenge.setVisible(angezeigt);
+		btnPositionMengePlus.setVisible(angezeigt);
+		btnPositionStornieren.setVisible(angezeigt);
+		lblPositionKontrolle.setVisible(angezeigt);
+		lblGesamtbetrag.setVisible(angezeigt);
+		lblGezahlt.setVisible(angezeigt);
+		lblRueckgeld.setVisible(angezeigt);
+		btnTransaktionZuruecksetzen.setVisible(angezeigt);
+		btnZahlungErfassen.setVisible(angezeigt);
+		btnTransaktionAbschliessen.setVisible(angezeigt);
+		btnGeldschublade.setVisible(angezeigt);
 	}
 	
 	private void zeigeMeldung(String pText)
