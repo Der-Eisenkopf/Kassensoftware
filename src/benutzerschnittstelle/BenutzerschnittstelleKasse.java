@@ -344,9 +344,14 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	
 	private void geklicktTransaktionAbschliessen() {
 		try {
-			dieSteuerung.schliesseTransaktionAb();
-			zeigeGebuchtePositionen(-1);
-			zeigeMeldung("Die Transaktion erfolgreich abgeschlossen.");
+			int antwort = JOptionPane.showConfirmDialog(this, "Transaktion wirklich abschließen?", "Kassensystem",
+					JOptionPane.YES_NO_OPTION);
+			if (antwort == JOptionPane.YES_OPTION)
+			{
+				dieSteuerung.schliesseTransaktionAb();
+				zeigeGebuchtePositionen(-1);
+				zeigeMeldung("Die Transaktion erfolgreich abgeschlossen.");
+			}
 		}
 		catch (Exception ex) {
 			zeigeWarnmeldung("Nur noch " + dieSteuerung.ermittleRueckgeldAlsStringOhneMinus() + " fällig.");
@@ -354,8 +359,13 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	}
 	
 	private void geklicktTransaktionZuruecksetzen() {
-		dieSteuerung.setzeTransaktionZurueck();
-		zeigeGebuchtePositionen(-1);
+		int antwort = JOptionPane.showConfirmDialog(this, "Transaktion wirklich zurücksetzen?", "Kassensystem",
+				JOptionPane.YES_NO_OPTION);
+		if (antwort == JOptionPane.YES_OPTION)
+		{
+			dieSteuerung.setzeTransaktionZurueck();
+			zeigeGebuchtePositionen(-1);
+		}
 	}
 	
 	private void geklicktZahlungErfasssen() {

@@ -55,7 +55,7 @@ public class Bon {
 		}
 		hauptbereich += strich;
 		
-		hauptbereich += "\n\n" + "Za zahlen: " + format.format(dieTransaktion.ermittleGesamtbetrag()) + " €";
+		hauptbereich += "\n\n" + "Zu zahlen: " + format.format(dieTransaktion.ermittleGesamtbetrag()) + " €";
 		hauptbereich += "\n" + "Gegeben: " + format.format(dieTransaktion.ermittleGezahlt()) + " €";
 		hauptbereich += "\n" + "Zurück: " + format.format(dieTransaktion.ermittleRueckgeld()) + " €";
 		footer = "Vielen Dank für Ihren Einkauf!";
