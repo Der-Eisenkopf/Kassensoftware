@@ -110,25 +110,25 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		lblPositionKontrolle.setLayout(null);
 		
 		btnPositionMengeMinus = new JButton("-");
-		btnPositionMengeMinus.setBounds(685, 120, 40, 30);
+		btnPositionMengeMinus.setBounds(685, 120, 45, 30);
 		contentPane.add(btnPositionMengeMinus);
 		btnPositionMengeMinus.setLayout(null);
 		btnPositionMengeMinus.addActionListener(e -> geklicktMengeMinus());
 		
 		btnPositionMenge = new JButton("9999.999");
-		btnPositionMenge.setBounds(725, 120, 120, 30);
+		btnPositionMenge.setBounds(730, 120, 115, 30);
 		contentPane.add(btnPositionMenge);
 		btnPositionMenge.setLayout(null);
 		btnPositionMenge.addActionListener(e -> geklicktMengeBearbeiten());
 		
 		btnPositionMengePlus = new JButton("+");
-		btnPositionMengePlus.setBounds(845, 120, 40, 30);
+		btnPositionMengePlus.setBounds(845, 120, 45, 30);
 		contentPane.add(btnPositionMengePlus);
 		btnPositionMengePlus.setLayout(null);
 		btnPositionMengePlus.addActionListener(e -> geklicktMengePlus());
 		
 		btnPositionStornieren = new JButton("Stornieren");
-		btnPositionStornieren.setBounds(685, 150, 200, 30);
+		btnPositionStornieren.setBounds(685, 150, 205, 30);
 		contentPane.add(btnPositionStornieren);
 		btnPositionStornieren.setLayout(null);
 		btnPositionStornieren.addActionListener(e -> geklicktStornieren());
@@ -176,7 +176,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 
         scrollTblPositionen = new JScrollPane(tblPositionen);
         
-        scrollTblPositionen.setBounds(60, 100, 600, 340);
+        scrollTblPositionen.setBounds(60, 100, 600, 345);
         
         contentPane.add(scrollTblPositionen);
         
@@ -185,22 +185,22 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		contentPane.add(lblEinleitung);
         
         btnTransaktionZuruecksetzen = new JButton("Transaktion zurücksetzen");
-        btnTransaktionZuruecksetzen.setBounds(685, 220, 200, 30);
+        btnTransaktionZuruecksetzen.setBounds(685, 220, 205, 30);
         contentPane.add(btnTransaktionZuruecksetzen);
         btnTransaktionZuruecksetzen.addActionListener(e -> geklicktTransaktionZuruecksetzen());
         
         btnZahlungErfassen = new JButton("Zahlung erfassen");
-        btnZahlungErfassen.setBounds(685, 295, 200, 30);
+        btnZahlungErfassen.setBounds(685, 295, 205, 30);
         contentPane.add(btnZahlungErfassen);
         btnZahlungErfassen.addActionListener(e -> geklicktZahlungErfasssen());
         
         btnTransaktionAbschliessen = new JButton("Transaktion abschließen");
-        btnTransaktionAbschliessen.setBounds(685, 410, 200, 35);
+        btnTransaktionAbschliessen.setBounds(685, 410, 205, 35);
         contentPane.add(btnTransaktionAbschliessen);
         btnTransaktionAbschliessen.addActionListener(e -> geklicktTransaktionAbschliessen());
         
         btnGeldschublade = new JButton("Geldschublade öffnen");
-        btnGeldschublade.setBounds(685, 365, 200, 30);
+        btnGeldschublade.setBounds(685, 365, 205, 30);
         contentPane.add(btnGeldschublade);
         btnGeldschublade.addActionListener(e -> {
 			try
