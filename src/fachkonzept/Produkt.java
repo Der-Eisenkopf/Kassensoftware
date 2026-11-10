@@ -1,6 +1,7 @@
 package fachkonzept;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Produkt
 {
@@ -9,6 +10,8 @@ public class Produkt
 	private BigDecimal nettopreis;
 	private String basiseinheit;
 	private BigDecimal umsatzsteuersatz;
+	private BigDecimal umsatzsteuer;
+	private BigDecimal bruttopreis;
 
 	public Produkt(String pEAN, String pBezeichnung, String pNettopreis, String pBasiseinheit, String pUmsatzsteuersatz)
 	{
@@ -25,6 +28,8 @@ public class Produkt
 		nettopreis = new BigDecimal(pNettopreis);
 		basiseinheit = pBasiseinheit;
 		umsatzsteuersatz = new BigDecimal(pUmsatzsteuersatz);
+		umsatzsteuer = nettopreis.multiply(umsatzsteuersatz).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP).stripTrailingZeros();
+		bruttopreis = nettopreis.add(umsatzsteuer).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
 	}
 
 	public String getEAN()
@@ -50,6 +55,16 @@ public class Produkt
 	public BigDecimal getUmsatzsteuersatz()
 	{
 		return umsatzsteuersatz;
+	}
+	
+	public BigDecimal getUmsatzsteuer()
+	{
+		return umsatzsteuer;
+	}
+	
+	public BigDecimal getBruttoPreis()
+	{
+		return bruttopreis;
 	}
 
 }

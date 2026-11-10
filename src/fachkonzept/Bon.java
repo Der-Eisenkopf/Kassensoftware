@@ -1,58 +1,86 @@
 package fachkonzept;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class Bon {
 	
+	Transaktion dieTransaktion;
 	private String header; // wird statisch definiert, z.B. "Tante-Emma-Laden ... Balingen"
-	private String datetime; // wird in Textform von der vorher aufgerufener Bibliothek gespeichert
-	private String[] positionen; // gebuchte Positionen in Textform
+	private LocalDateTime zeitpunkt; 
 	private String hauptbereich;
 	// private String steueruebersicht // für die nächsten Sprints
 	private String footer; // wird statisch definiert, z.B. "Alle Beträge sind in Euro ..."
 	private String dateiname;
 	
-	public Bon() {
+	private static NumberFormat format = NumberFormat.getNumberInstance(Locale.GERMANY);
+	// damit 1234.56 zum 1.234,56 wird
+	
+	public Bon(Transaktion pTransaktion) {
+
+		zeitpunkt = LocalDateTime.now();
+		dieTransaktion = pTransaktion;
+		header = "Tante-Emma-Laden\nAn der Ecke 2\n72336 Balingen\n" 
+		         + zeitpunkt.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"));
 		
-		header = "Tante-Emma-Laden";
-		hauptbereich = "";
-		footer = "Alle Beträge sind in Euro. \n Vielen Dank für Ihren Einkauf!";
+		String strich = "";
+		for (int i = 0; i < 65; i++) {
+			strich += "-";
+		}
+		hauptbereich = strich;
+		for (int i = 0; i < dieTransaktion.ermittleGroesse(); i++) {
+			
+			String bezeichnung = dieTransaktion.ermittleGebuchteBezeichnung(i);
+			
+			String preisProMenge = format.format(dieTransaktion.ermittleGebuchteMenge(i)) 
+			                       + " " + dieTransaktion.ermittleGebuchteEinheit(i)
+			                       + " x " 
+			                       + format.format(dieTransaktion.ermittleGebuchtenBruttoPreis(i))
+			                       + " €";
+			
+			String betrag = format.format(dieTransaktion.ermittleGebuchtenBetrag(i)) + " €";
+			
+			hauptbereich += "\n" + String.format(
+				    "%-30s%20s%15s",
+				    bezeichnung,
+				    preisProMenge,
+				    betrag
+				) + "\n";
+			
+		}
+		hauptbereich += strich;
+		
+		hauptbereich += "\n\n" + "Za zahlen: " + format.format(dieTransaktion.ermittleGesamtbetrag()) + " €";
+		hauptbereich += "\n" + "Gegeben: " + format.format(dieTransaktion.ermittleGezahlt()) + " €";
+		hauptbereich += "\n" + "Zurück: " + format.format(dieTransaktion.ermittleRueckgeld()) + " €";
+		footer = "Vielen Dank für Ihren Einkauf!";
+		
+		dateiname = "bon_" + zeitpunkt.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 		
 	}
 	
-    public void drucke(Transaktion pTransaktion) {
+    public void drucke() {
 		
-		for (int i = 0; i < pTransaktion.ermittleGroesse(); i++) {
-			
-			
-			
-		}
 		Path directory = Path.of("bons");
-		String fileName = "example.txt";
-        String contents = "Hello, World!\nThis is my text file.";
+        String contents = header + "\n\n" + hauptbereich + "\n\n" + footer;
 
         try {
-            // 3. Create the directory (including parent directories if needed)
             Files.createDirectories(directory);
 
-            // 4. Create the file inside the directory and write its contents
-            Path filePath = directory.resolve(fileName);
+            Path filePath = directory.resolve(dateiname);
             Files.writeString(filePath, contents);
 
-            System.out.println("File created at: " + filePath.toAbsolutePath());
+            System.out.println("Bon gespeichert unter: " + filePath);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 		
 	}
-    
-    public String meldeErstellung() {
-    	return "Bon wurde gespeichert unter ...";
-    }
     
 }

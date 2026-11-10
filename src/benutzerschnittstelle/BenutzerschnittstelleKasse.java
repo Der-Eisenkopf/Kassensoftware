@@ -1,16 +1,20 @@
 package benutzerschnittstelle;
 
 import java.awt.EventQueue;
-import java.util.ArrayList;
+import java.awt.event.ActionEvent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
-import java.awt.Color;
+
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -21,7 +25,7 @@ import steuerung.Steuerung;
 public class BenutzerschnittstelleKasse extends JFrame {
 	
 	private JPanel contentPane;
-	private JPanel pnlPositionen;
+	//private JPanel pnlPositionen;
 	private JTextField txtSuchleiste;
 	private JLabel lblSuchleiste;
 	private JButton btnBuchen;
@@ -47,6 +51,9 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	private JButton btnTransaktionAbschliessen;
 	
 	private JButton btnGeldschublade;
+	
+	private InputMap InputMap;
+	private ActionMap ActionMap;
 	
 	private Steuerung dieSteuerung;
 	
@@ -80,7 +87,6 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		
 		lblSuchleiste = new JLabel("Produktnummer:");
 		lblSuchleiste.setBounds(60, 55, 300, 20);
-		//lblSuchleiste.setForeground(new Color(150, 150, 150));
 		contentPane.add(lblSuchleiste);
 		lblSuchleiste.setLayout(null);
 		
@@ -125,17 +131,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		btnPositionStornieren.setLayout(null);
 		btnPositionStornieren.addActionListener(e -> geklicktStornieren());
 		
-		
-		
-		pnlPositionen = new JPanel();
-		pnlPositionen.setBorder(new LineBorder(new Color(0, 0, 0)));
-		pnlPositionen.setBounds(150, 200, 500, 231);
-		//contentPane.add(pnlPositionen);
-		pnlPositionen.setLayout(null);
-		
-		dieSteuerung = new Steuerung(this);
-		
-		//btnPositionStornieren = new ArrayList<JButton>();
+		dieSteuerung = new Steuerung();
 		
 		String[] spalten = {
 				"Produktnummer", 
@@ -146,20 +142,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 				"Betrag"
 				};
 		
-		
-        Object[][] daten = {
-        		/*
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "2 € pro KG", "7%", 2.50, "5€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "2 € pro KG", "7%", 2.50, "5€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            {"2901234500008", "Spülmittel Zitrone 500 ml", "9999 € pro KG", "17%", 9999.999, "9999.99€"},
-            */
-        };
+        Object[][] daten = {};
 
         mdlPositionen = new DefaultTableModel(daten, spalten) {
         	@Override
@@ -188,19 +171,11 @@ public class BenutzerschnittstelleKasse extends JFrame {
         lblRueckgeld = new JLabel("Rückgeld: 9999,99 €");
         lblRueckgeld.setBounds(690, 340, 260, 30);
         contentPane.add(lblRueckgeld);
-        
-        
-        
-        
-        //tblPositionen.setBounds(10, 10, 400, 100);
-        //tblPositionen.setLayout(null);
 
         scrollTblPositionen = new JScrollPane(tblPositionen);
         
         scrollTblPositionen.setBounds(60, 100, 600, 340);
-        //scrollPane.setLayout(null);
         
-        //pnlPositionen.add(tblPositionen);
         contentPane.add(scrollTblPositionen);
         
         lblEinleitung = new JLabel("Scannen Sie ein Produkt, um mit der Kassiervorgang loszulegen.");
@@ -225,6 +200,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
         btnGeldschublade = new JButton("Geldschublade öffnen");
         btnGeldschublade.setBounds(685, 365, 200, 30);
         contentPane.add(btnGeldschublade);
+        btnGeldschublade.addActionListener(e -> geklicktGeldschublade());
         
         tblPositionen.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -233,9 +209,41 @@ public class BenutzerschnittstelleKasse extends JFrame {
                 	btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
                 }
             }
+            txtSuchleiste.requestFocusInWindow();
         });
         
         schalteSichtbarkeitUm(false);
+        
+        InputMap = contentPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    	ActionMap = contentPane.getActionMap();
+        
+        InputMap.put(KeyStroke.getKeyStroke("released UP"), "upReleased");
+        ActionMap.put("upReleased", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+            	wechsleZeile(true);
+            }
+        });
+        
+        InputMap.put(KeyStroke.getKeyStroke("released DOWN"), "downReleased");
+        ActionMap.put("downReleased", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+            	wechsleZeile(false);
+            }
+        });
+        
+        InputMap.put(KeyStroke.getKeyStroke("released LEFT"), "leftReleased");
+        ActionMap.put("leftReleased", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+            	geklicktMengeMinus();
+            }
+        });
+        
+        InputMap.put(KeyStroke.getKeyStroke("released RIGHT"), "rightReleased");
+        ActionMap.put("rightReleased", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+            	geklicktMengePlus();
+            }
+        });
         
 	}
 	
@@ -257,7 +265,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		}
 		catch (Exception ex)
 		{
-			zeigeMeldung(ex.getMessage());
+			zeigeWarnmeldung(ex.getMessage());
 		}
 	}
 	
@@ -266,33 +274,40 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		zeigeGebuchtePositionen(-1);
 		zeigeGesamtbetrag();
 		zeigeGezahltUndRueckgeld();
+		wechsleZeile(false);
 	}
 	
 	private void geklicktMengeMinus() {
 		try {
-			dieSteuerung.verkleinereGebuchteMenge(tblPositionen.getSelectedRow());
-			btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(tblPositionen.getSelectedRow()));
-			zeigeGebuchtePositionen(tblPositionen.getSelectedRow());
-			zeigeGesamtbetrag();
-			zeigeGezahltUndRueckgeld();
+			int selectedRow = tblPositionen.getSelectedRow();
+			if (selectedRow >= 0) {
+				dieSteuerung.verkleinereGebuchteMenge(selectedRow);
+				btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
+				zeigeGebuchtePositionen(selectedRow);
+				zeigeGesamtbetrag();
+				zeigeGezahltUndRueckgeld();
+			}
 		}
 		catch (Exception ex)
 		{
-			zeigeMeldung(ex.getMessage());
+			zeigeWarnmeldung(ex.getMessage());
 		}
 	}
 	
 	private void geklicktMengePlus() {
 		try {
-			dieSteuerung.vergroessereGebuchteMenge(tblPositionen.getSelectedRow());
-			btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(tblPositionen.getSelectedRow()));
-			zeigeGebuchtePositionen(tblPositionen.getSelectedRow());
-			zeigeGesamtbetrag();
-			zeigeGezahltUndRueckgeld();
+			int selectedRow = tblPositionen.getSelectedRow();
+			if (selectedRow >= 0) {
+				dieSteuerung.vergroessereGebuchteMenge(selectedRow);
+				btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
+				zeigeGebuchtePositionen(selectedRow);
+				zeigeGesamtbetrag();
+				zeigeGezahltUndRueckgeld();
+			}
 		}
 		catch (Exception ex)
 		{
-			zeigeMeldung(ex.getMessage());
+			zeigeWarnmeldung(ex.getMessage());
 		}
 	}
 	
@@ -300,7 +315,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		try {
 			String neueMenge = JOptionPane.showInputDialog("Geben Sie den gewünschten Betrag in STK ein." + "\n" + "Verwenden Sie eine gültige Zahl ohne Sonderzeichen.");
 			int selectedRow = tblPositionen.getSelectedRow();
-			if (neueMenge != null) {
+			if (neueMenge != null && !neueMenge.equals("")) {
 				dieSteuerung.bearbeiteGebuchteMenge(selectedRow, neueMenge);
 				btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
 				zeigeGebuchtePositionen(tblPositionen.getSelectedRow());
@@ -310,16 +325,25 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		}
 		catch (Exception ex)
 		{
-			zeigeMeldung(ex.getMessage());
+			zeigeWarnmeldung(ex.getMessage());
 		}
+		txtSuchleiste.requestFocusInWindow();
 	}
 	
 	private void geklicktTransaktionAbschliessen() {
-		dieSteuerung.schliesseTransaktionAb();
+		try {
+			dieSteuerung.schliesseTransaktionAb();
+			zeigeGebuchtePositionen(-1);
+			zeigeMeldung("Die Transaktion erfolgreich abgeschlossen.");
+		}
+		catch (Exception ex) {
+			zeigeWarnmeldung("Nur noch " + dieSteuerung.ermittleRueckgeldAlsStringOhneMinus() + " fällig.");
+		}
 	}
 	
 	private void geklicktTransaktionZuruecksetzen() {
 		dieSteuerung.setzeTransaktionZurueck();
+		zeigeGebuchtePositionen(-1);
 	}
 	
 	private void geklicktZahlungErfasssen() {
@@ -332,16 +356,14 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		}
 		catch (Exception ex)
 		{
-			zeigeMeldung(ex.getMessage());
+			zeigeWarnmeldung(ex.getMessage());
 		}
+		txtSuchleiste.requestFocusInWindow();
 	}
 	
 	private void geklicktGeldschublade() {
-		
-	}
-	
-	private void zeigeText(int pIndex) {
-		
+		dieSteuerung.oeffneGeldschublade();
+		txtSuchleiste.requestFocusInWindow();
 	}
 	
 	private void zeigeGesamtbetrag() {
@@ -373,6 +395,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		else  {
 			schalteSichtbarkeitUm(false);
 		}
+		txtSuchleiste.requestFocusInWindow();
 	}
 	
 	private void schalteSichtbarkeitUm(boolean angezeigt) {
@@ -392,9 +415,35 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		btnGeldschublade.setVisible(angezeigt);
 	}
 	
-	private void zeigeMeldung(String pText)
+	private void wechsleZeile(boolean pNachOben) {
+		int selectedRow = tblPositionen.getSelectedRow();
+		int newSelectedRow;
+		int tblPositionenSize = tblPositionen.getRowCount();
+		if (tblPositionenSize > 0) {
+			if (pNachOben) {
+				newSelectedRow = selectedRow - 1;
+				if (newSelectedRow < 0) {
+					newSelectedRow = tblPositionenSize - 1;
+				}
+			}
+			else {
+				newSelectedRow = selectedRow + 1;
+				if (newSelectedRow >= tblPositionenSize) {
+					newSelectedRow = 0;
+				}
+			}
+			tblPositionen.setRowSelectionInterval(newSelectedRow, newSelectedRow);
+		}
+	}
+	
+	private void zeigeWarnmeldung(String pText)
 	{
 		JOptionPane.showMessageDialog(this, pText, "Kassensystem", JOptionPane.WARNING_MESSAGE);
+	}
+	
+	private void zeigeMeldung(String pText)
+	{
+		JOptionPane.showMessageDialog(this, pText, "Kassensystem", JOptionPane.INFORMATION_MESSAGE);
 	}
 	
 }

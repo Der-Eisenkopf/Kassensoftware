@@ -8,8 +8,6 @@ public class Transaktion {
 	
 	private ArrayList<Position> PositionenGebucht;
 	
-	private Bon derBon;
-	
 	private BigDecimal gesamtbetrag;
 	
 	private BigDecimal gezahlt;
@@ -28,8 +26,13 @@ public class Transaktion {
 	}
 	
 	public void schliesseAb() {
-		derBon = new Bon();
-		derBon.drucke(this);
+		if (!genugGezahlt()) {
+			throw new IllegalArgumentException(
+			        "Diebstahl wird hier nicht toleriert."
+			    );
+		}
+		Bon derBon = new Bon(this);
+		derBon.drucke();
 		setzeZurueck();
 	}
 	
@@ -53,7 +56,12 @@ public class Transaktion {
 	
 	public void storniereGebuchtePosition(int pIndex) {
 		PositionenGebucht.remove(pIndex);
-		berechneGesamtbetrag();
+		if (ermittleGroesse() == 0) {
+			setzeZurueck();
+		}
+		else {
+			berechneGesamtbetrag();
+		}
 	}
 	
 	public void vergroessereGebuchteMenge(int pIndex) {
@@ -91,6 +99,10 @@ public class Transaktion {
 	}
 	public BigDecimal ermittleGebuchtenBetrag(int pIndex) {
 		return PositionenGebucht.get(pIndex).ermittleBetragBrutto();
+	}
+	
+	public BigDecimal ermittleGebuchtenBruttoPreis(int pIndex) {
+		return PositionenGebucht.get(pIndex).ermittleProdukt().getBruttoPreis();
 	}
 	
 	private void berechneGesamtbetrag() {

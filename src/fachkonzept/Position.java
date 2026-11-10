@@ -23,8 +23,8 @@ public class Position {
 	
 	private void berechneBetraege() {
 		betragNetto = dasProdukt.getNettoPreis().multiply(menge).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
-		betragSteuer = betragNetto.multiply(dasProdukt.getUmsatzsteuersatz()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP).stripTrailingZeros();
-		betragBrutto = betragNetto.add(betragSteuer).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+		betragSteuer = dasProdukt.getUmsatzsteuer().multiply(menge).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+		betragBrutto = dasProdukt.getBruttoPreis().multiply(menge).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
 	}
 	
 	public void bearbeiteMenge(BigDecimal pMenge) {

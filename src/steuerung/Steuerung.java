@@ -3,15 +3,12 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.Locale;
-
-import benutzerschnittstelle.BenutzerschnittstelleKasse;
 import fachkonzept.Transaktion;
+import fachkonzept.Geldschublade;
 import datenspeicherung.db.ProduktSpeicher;
 
 
 public class Steuerung {
-	
-	private BenutzerschnittstelleKasse dieBenutzerschnittstelleKasse;
 	
 	private static NumberFormat format = NumberFormat.getNumberInstance(Locale.GERMANY);
 	// damit 1234.56 zum 1.234,56 wird
@@ -20,14 +17,13 @@ public class Steuerung {
 	
 	private ProduktSpeicher derProduktSpeicher; // Mögliche Idee: db4free.net statt lokal
 	
-	// private Geldschublade dieGeldschublade;
+	private Geldschublade dieGeldschublade;
 	
-	
-	public Steuerung(BenutzerschnittstelleKasse pBenutzerschnittstelleKasse)
+	public Steuerung()
 	{
-		dieBenutzerschnittstelleKasse = pBenutzerschnittstelleKasse;
 		dieTransaktion = new Transaktion();
 		derProduktSpeicher = new ProduktSpeicher();
+		dieGeldschublade = new Geldschublade();
 	}
 	
 	public void buchePosition(String pEAN) throws SQLException {
@@ -77,7 +73,7 @@ public class Steuerung {
 	}
 	
 	public void oeffneGeldschublade() {
-		// dieGeldschublade.oeffne();
+		dieGeldschublade.oeffne();
 	}
 	
     public void schliesseGeldschublade() {
