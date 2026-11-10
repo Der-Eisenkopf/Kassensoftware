@@ -52,8 +52,6 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	private JButton btnZahlungErfassen;
 	private JButton btnTransaktionAbschliessen;
 	
-	private JButton btnGeldschublade;
-	
 	private InputMap InputMap;
 	private ActionMap ActionMap;
 	
@@ -198,21 +196,6 @@ public class BenutzerschnittstelleKasse extends JFrame {
         btnTransaktionAbschliessen.setBounds(685, 410, 205, 35);
         contentPane.add(btnTransaktionAbschliessen);
         btnTransaktionAbschliessen.addActionListener(e -> geklicktTransaktionAbschliessen());
-        
-        btnGeldschublade = new JButton("Geldschublade öffnen");
-        btnGeldschublade.setBounds(685, 365, 205, 30);
-        contentPane.add(btnGeldschublade);
-        btnGeldschublade.addActionListener(e -> {
-			try
-			{
-				dieSteuerung.oeffneGeldschublade();
-			}
-			catch (IOException e1)
-			{
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		});
         
         tblPositionen.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -369,22 +352,26 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	}
 	
 	private void geklicktZahlungErfasssen() {
-		try {
-			String neuerBetrag = JOptionPane.showInputDialog("Geben Sie den gewünschten Betrag in € ein." + "\n" + "Verwenden Sie eine gültige Zahl ohne Sonderzeichen.");
-			if (neuerBetrag != null && !neuerBetrag.equals("")) {
+		while (true) {
+			String neuerBetrag = JOptionPane.showInputDialog(this,
+					"Fällig: " + dieSteuerung.ermittleGesamtbetragAlsString() + "\n"
+					+ "Geben Sie den erhaltenen Betrag in € ein.");
+			if (neuerBetrag == null || neuerBetrag.trim().isEmpty()) {
+				break; // Abbrechen
+			}
+			try {
 				dieSteuerung.erfasseZahlung(neuerBetrag);
-				zeigeGezahltUndRueckgeld();
+				break; // Zahlung ok, Schublade offen
+			}
+			catch (IllegalArgumentException ex) {
+				zeigeWarnmeldung(ex.getMessage()); // zu wenig oder ungültig: Dialog kommt erneut
+			}
+			catch (IOException ex) {
+				zeigeWarnmeldung(ex.getMessage()); // Zahlung gebucht, Schublade nicht erreichbar
+				break;
 			}
 		}
-		catch (Exception ex)
-		{
-			zeigeWarnmeldung(ex.getMessage());
-		}
-		txtSuchleiste.requestFocusInWindow();
-	}
-	
-	private void geklicktGeldschublade() throws IOException {
-		dieSteuerung.oeffneGeldschublade();
+		zeigeGezahltUndRueckgeld();
 		txtSuchleiste.requestFocusInWindow();
 	}
 	
@@ -434,7 +421,6 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		btnTransaktionZuruecksetzen.setVisible(angezeigt);
 		btnZahlungErfassen.setVisible(angezeigt);
 		btnTransaktionAbschliessen.setVisible(angezeigt);
-		btnGeldschublade.setVisible(angezeigt);
 	}
 	
 	private void wechsleZeile(boolean pNachOben) {
