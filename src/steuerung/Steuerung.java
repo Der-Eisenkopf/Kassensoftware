@@ -91,7 +91,7 @@ public class Steuerung {
 		 } 
 		 catch (NumberFormatException e) {
 		     throw new IllegalArgumentException(
-		    		 pMenge + " - so viel kannst du dir zu Weihnachten gratis vom Santa wünschen.", e
+		    		 "Die eingegebene Menge \"" + pMenge + "\" ist ungültig. Bitte geben Sie eine gültige Zahl ein.", e
 		        );
 		 }
 	}
