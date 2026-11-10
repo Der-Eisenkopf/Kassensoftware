@@ -23,7 +23,7 @@ public class ProduktSpeicher
 
 	public ProduktSpeicher()
 	{
-		url = "jdbc:mariadb://localhost:3306/kassensystemdb";
+		url = "jdbc:mariadb://localhost:3307/kassensystemdb";
 		benutzer = "root";
 		passwort = "";
 	}
