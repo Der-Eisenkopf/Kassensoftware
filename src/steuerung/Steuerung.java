@@ -1,14 +1,22 @@
 package steuerung;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.Properties;
+
 import fachkonzept.Transaktion;
 import fachkonzept.Geldschublade;
 import datenspeicherung.db.ProduktSpeicher;
 
 
 public class Steuerung {
+	
+	private static final String KASSEN_KONFIG = "kasse.properties";
 	
 	private static NumberFormat format = NumberFormat.getNumberInstance(Locale.GERMANY);
 	// damit 1234.56 zum 1.234,56 wird
@@ -17,15 +25,54 @@ public class Steuerung {
 	
 	private ProduktSpeicher derProduktSpeicher; // Mögliche Idee: db4free.net statt lokal
 	
-	private Geldschublade dieGeldschublade;
+	private final Geldschublade geldschublade;
 	
-	public Steuerung()
+	public Steuerung() throws IOException
 	{
 		dieTransaktion = new Transaktion();
 		derProduktSpeicher = new ProduktSpeicher();
-		dieGeldschublade = new Geldschublade();
+		geldschublade = erzeugeGeldschublade();
 	}
-	
+	// Die Datei ist optional; ohne sie laeuft die Geldschublade im Simulationsmodus
+		private static Geldschublade erzeugeGeldschublade() throws IOException
+		{
+			if (!Files.exists(Paths.get(KASSEN_KONFIG)))
+			{
+				return new Geldschublade("COM6", 9600, Geldschublade.STANDARD_BEFEHL);
+			}
+			Properties props = new Properties();
+			try (FileInputStream in = new FileInputStream(KASSEN_KONFIG))
+			{
+				props.load(in);
+			}
+			try
+			{
+				int baud = Integer.parseInt(props.getProperty("schublade.baud", "9600").trim());
+				return new Geldschublade(props.getProperty("schublade.com"), baud,
+						leseBefehl(props.getProperty("schublade.befehl")));
+			}
+			catch (IllegalArgumentException e)
+			{
+				throw new IOException("Fehler in " + KASSEN_KONFIG + ": " + e.getMessage(), e);
+			}
+		}
+		
+		// Befehl als Hex-Bytes, z. B. "1B 70 00 19 FA"; leer = ESC/POS-Standardbefehl
+		private static byte[] leseBefehl(String hex)
+		{
+			if (hex == null || hex.trim().isEmpty())
+			{
+				return Geldschublade.STANDARD_BEFEHL;
+			}
+			String[] teile = hex.trim().split("[\\s,]+");
+			byte[] befehl = new byte[teile.length];
+			for (int i = 0; i < teile.length; i++)
+			{
+				befehl[i] = (byte) Integer.parseInt(teile[i], 16);
+			}
+			return befehl;
+		}
+		
 	public void buchePosition(String pEAN) throws SQLException {
 		dieTransaktion.buchePosition(derProduktSpeicher.laden(pEAN));
 	}
@@ -72,12 +119,8 @@ public class Steuerung {
 		dieTransaktion.schliesseAb();
 	}
 	
-	public void oeffneGeldschublade() {
-		dieGeldschublade.oeffne();
-	}
-	
-    public void schliesseGeldschublade() {
-    	// dieGeldschublade.schliesse();
+	public void oeffneGeldschublade() throws IOException {
+		geldschublade.oeffne();
 	}
     
     public String ermittleGesamtbetragAlsString() {
