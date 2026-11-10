@@ -100,15 +100,24 @@ public class Steuerung {
 		dieTransaktion.vergroessereGebuchteMenge(pIndex);
 	}
 	
-	public void erfasseZahlung(String pBetrag) {
+	public void erfasseZahlung(String pBetrag) throws IOException {
+		BigDecimal betrag;
 		try {
-			dieTransaktion.erfasseZahlung(new BigDecimal(pBetrag.replace(',', '.')));
-		 } 
-		 catch (NumberFormatException e) {
-		     throw new IllegalArgumentException(
-		    		 "\"" + pBetrag + "\" ist kein gültiger Betrag.", e
-		        );
-		 }
+			betrag = new BigDecimal(pBetrag.trim().replace(',', '.'));
+		}
+		catch (NumberFormatException e) {
+			throw new IllegalArgumentException(
+					"Bitte einen gültigen Betrag eingeben.", e
+			);
+		}
+		if (betrag.compareTo(dieTransaktion.ermittleGesamtbetrag()) < 0) {
+			throw new IllegalArgumentException(
+					"Zu wenig: " + format.format(betrag) + " € gegeben, " + ermittleGesamtbetragAlsString()
+					+ " fällig. Bitte einen neuen Betrag eingeben."
+			);
+		}
+		dieTransaktion.erfasseZahlung(betrag);
+		geldschublade.oeffne();
 	}
 	
 	public void setzeTransaktionZurueck() {
@@ -117,10 +126,6 @@ public class Steuerung {
 	
 	public void schliesseTransaktionAb() {
 		dieTransaktion.schliesseAb();
-	}
-	
-	public void oeffneGeldschublade() throws IOException {
-		geldschublade.oeffne();
 	}
     
     public String ermittleGesamtbetragAlsString() {
