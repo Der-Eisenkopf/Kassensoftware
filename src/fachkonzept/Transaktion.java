@@ -118,14 +118,9 @@ public class Transaktion {
 	}
 	
 	public void erfasseZahlung(BigDecimal pBetrag) {
-		if (pBetrag.compareTo(BigDecimal.ZERO) < 0) {
+		if (pBetrag.compareTo(BigDecimal.ZERO) <= 0) {
 		    throw new IllegalArgumentException(
-		        "Haste wohl die Kasse mit der Sparkasse verwechselt, das ist was anderes."
-		    );
-		}
-		if (pBetrag.compareTo(BigDecimal.ZERO) == 0) {
-		    throw new IllegalArgumentException(
-		        "Wow, dankeschön, das war recht großzügig von dir..."
+		        "Der eingegebene Betrag ist ungültig. Bitte geben Sie einen Betrag größer als 0 ein."
 		    );
 		}
 		gezahlt = pBetrag.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();

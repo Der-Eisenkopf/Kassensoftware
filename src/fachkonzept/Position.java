@@ -29,10 +29,10 @@ public class Position {
 	
 	public void bearbeiteMenge(BigDecimal pMenge) {
 		if (pMenge.stripTrailingZeros().scale() > 0 && dasProdukt.getBasiseinheit().equals("STK")) {
-			throw new IllegalArgumentException("Stücke darf man nicht in Stücke reißen. Du solltest dir wohl einen Therapeuten suchen.");
+			throw new IllegalArgumentException("Bei der Basiseinheit STK sind ausschließlich ganzzahlige Mengen zulässig.");
 		}
 		if (pMenge.compareTo(BigDecimal.ZERO) <= 0) {
-			throw new IllegalArgumentException("Die Menge muss größer als 0 sein. Anders als der IQ des Kassierers.");
+			throw new IllegalArgumentException("Die Menge muss größer als null sein.");
 		}
 		menge = pMenge.setScale(3, RoundingMode.HALF_UP).stripTrailingZeros();
 		berechneBetraege();
