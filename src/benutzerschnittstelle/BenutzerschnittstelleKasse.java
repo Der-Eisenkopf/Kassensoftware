@@ -2,6 +2,8 @@ package benutzerschnittstelle;
 
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -75,7 +77,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 			}
 		});
 	}
-	public BenutzerschnittstelleKasse() {
+	public BenutzerschnittstelleKasse() throws IOException {
 		
 		setTitle("Kassensystem");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -200,7 +202,17 @@ public class BenutzerschnittstelleKasse extends JFrame {
         btnGeldschublade = new JButton("Geldschublade öffnen");
         btnGeldschublade.setBounds(685, 365, 200, 30);
         contentPane.add(btnGeldschublade);
-        btnGeldschublade.addActionListener(e -> geklicktGeldschublade());
+        btnGeldschublade.addActionListener(e -> {
+			try
+			{
+				dieSteuerung.oeffneGeldschublade();
+			}
+			catch (IOException e1)
+			{
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
         
         tblPositionen.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -361,7 +373,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		txtSuchleiste.requestFocusInWindow();
 	}
 	
-	private void geklicktGeldschublade() {
+	private void geklicktGeldschublade() throws IOException {
 		dieSteuerung.oeffneGeldschublade();
 		txtSuchleiste.requestFocusInWindow();
 	}
