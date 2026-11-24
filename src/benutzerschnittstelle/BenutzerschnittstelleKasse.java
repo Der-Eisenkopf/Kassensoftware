@@ -1,8 +1,10 @@
 package benutzerschnittstelle;
 
+import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -12,12 +14,16 @@ import javax.swing.table.DefaultTableModel;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
+import javax.swing.JWindow;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -202,6 +208,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
                 int selectedRow = tblPositionen.getSelectedRow();
                 if (selectedRow != -1) {
                 	btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
+                	aktualisiereMengenButtons(selectedRow);  
                 }
             }
             txtSuchleiste.requestFocusInWindow();
@@ -250,10 +257,24 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		}
 		try
 		{
-			dieSteuerung.buchePosition(ean);
+			int zeile;
+			if (dieSteuerung.istGewichtsartikel(ean)) 
+			{
+			    BigDecimal kg = frageGewichtAb();
+			    if (kg == null) 
+			    {
+			        txtSuchleiste.setText("");
+			        return;
+			    }
+			    zeile = dieSteuerung.buchePositionMitGewicht(ean, kg);
+			} else 
+			{
+			    dieSteuerung.buchePosition(ean);
+			    zeile = dieSteuerung.ermittleTransaktionGroesse() - 1;
+			}
 			txtSuchleiste.setText("");
-			zeigeGebuchtePositionen(dieSteuerung.ermittleTransaktionGroesse()-1);
-			btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(dieSteuerung.ermittleTransaktionGroesse()-1));
+			zeigeGebuchtePositionen(zeile);
+			btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(zeile));
 			zeigeGesamtbetrag();
 			zeigeGezahltUndRueckgeld();
 			
@@ -263,6 +284,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 			zeigeWarnmeldung(ex.getMessage());
 		}
 	}
+	
 	
 	private void geklicktStornieren() {
 		dieSteuerung.storniereGebuchtePosition(tblPositionen.getSelectedRow());
@@ -275,7 +297,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	private void geklicktMengeMinus() {
 		try {
 			int selectedRow = tblPositionen.getSelectedRow();
-			if (selectedRow >= 0) {
+			if (selectedRow >= 0 && !dieSteuerung.istGewichtsposition(selectedRow)) {
 				dieSteuerung.verkleinereGebuchteMenge(selectedRow);
 				btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
 				zeigeGebuchtePositionen(selectedRow);
@@ -292,7 +314,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 	private void geklicktMengePlus() {
 		try {
 			int selectedRow = tblPositionen.getSelectedRow();
-			if (selectedRow >= 0) {
+			if (selectedRow >= 0 && !dieSteuerung.istGewichtsposition(selectedRow)) {
 				dieSteuerung.vergroessereGebuchteMenge(selectedRow);
 				btnPositionMenge.setText(dieSteuerung.ermittleGebuchteMengeAlsString(selectedRow));
 				zeigeGebuchtePositionen(selectedRow);
@@ -325,6 +347,14 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		txtSuchleiste.requestFocusInWindow();
 	}
 	
+	private void aktualisiereMengenButtons(int pZeile) 
+	{
+	    boolean stueckArtikel = !dieSteuerung.istGewichtsposition(pZeile);
+	    btnPositionMenge.setEnabled(stueckArtikel); 
+	    btnPositionMengeMinus.setEnabled(stueckArtikel);
+	    btnPositionMengePlus.setEnabled(stueckArtikel);
+	}
+	
 	private void geklicktTransaktionAbschliessen() {
 		try {
 			int antwort = JOptionPane.showConfirmDialog(this, "Transaktion wirklich abschließen?", "Kassensystem",
@@ -333,7 +363,7 @@ public class BenutzerschnittstelleKasse extends JFrame {
 			{
 				dieSteuerung.schliesseTransaktionAb();
 				zeigeGebuchtePositionen(-1);
-				zeigeMeldung("Die Transaktion erfolgreich abgeschlossen.");
+				zeigeKurzmeldung("Die Transaktion wurde erfolgreich abgeschlossen.");
 			}
 		}
 		catch (Exception ex) {
@@ -449,9 +479,44 @@ public class BenutzerschnittstelleKasse extends JFrame {
 		JOptionPane.showMessageDialog(this, pText, "Kassensystem", JOptionPane.WARNING_MESSAGE);
 	}
 	
-	private void zeigeMeldung(String pText)
+	private void zeigeKurzmeldung(String pText)
 	{
-		JOptionPane.showMessageDialog(this, pText, "Kassensystem", JOptionPane.INFORMATION_MESSAGE);
+	    JWindow fenster = new JWindow(this);
+	    JLabel lbl = new JLabel(pText, SwingConstants.CENTER);
+	    lbl.setOpaque(true);
+	    lbl.setBackground(new Color(220, 245, 220));
+	    lbl.setBorder(BorderFactory.createCompoundBorder(
+	            BorderFactory.createLineBorder(Color.GRAY),
+	            new EmptyBorder(15, 30, 15, 30)));
+	    fenster.add(lbl);
+	    fenster.pack();
+	    fenster.setLocationRelativeTo(this);
+	    fenster.setFocusableWindowState(false);
+	    fenster.setVisible(true);
+
+	    Timer timer = new Timer(2000, e -> fenster.dispose()); // 2 Sekunden
+	    timer.setRepeats(false);
+	    timer.start();
+	}
+	
+	private BigDecimal frageGewichtAb() 
+	{
+	    while (true) {
+	        int antwort = JOptionPane.showConfirmDialog(this,
+	                "Artikel auf die Waage legen und mit OK übernehmen.",
+	                "Wiegen", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+	        if (antwort != JOptionPane.OK_OPTION) 
+	        {
+	            return null;
+	        }
+	        try 
+	        {
+	            return dieSteuerung.leseGewicht();
+	        } catch (Exception ex) 
+	        {
+	            zeigeWarnmeldung(ex.getMessage()); 
+	        }
+	    }
 	}
 	
 }

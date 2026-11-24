@@ -1,77 +1,111 @@
 package steuerung;
 import java.io.FileInputStream;
+import java.math.RoundingMode;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
 import fachkonzept.Transaktion;
+import fachkonzept.Waage;
 import fachkonzept.Geldschublade;
+import fachkonzept.Produkt;
 import datenspeicherung.db.ProduktSpeicher;
 
 
 public class Steuerung {
 	
 	private static final String KASSEN_KONFIG = "kasse.properties";
-	
 	private static NumberFormat format = NumberFormat.getNumberInstance(Locale.GERMANY);
-	// damit 1234.56 zum 1.234,56 wird
-	
 	private Transaktion dieTransaktion;
-	
-	private ProduktSpeicher derProduktSpeicher; // Mögliche Idee: db4free.net statt lokal
-	
+	private ProduktSpeicher derProduktSpeicher;
 	private final Geldschublade geldschublade;
+	private static final String WAAGE_PFAD = "/uc3/getlifeweight";
+	private final Waage waage; //
 	
 	public Steuerung() throws IOException
 	{
+		Properties konfig = ladeKonfig();
 		dieTransaktion = new Transaktion();
 		derProduktSpeicher = new ProduktSpeicher();
-		geldschublade = erzeugeGeldschublade();
+		geldschublade = erzeugeGeldschublade(konfig);
+		waage = erzeugeWaage(konfig);
 	}
-	// Die Datei ist optional; ohne sie laeuft die Geldschublade im Simulationsmodus
-		private static Geldschublade erzeugeGeldschublade() throws IOException
+
+	private static Geldschublade erzeugeGeldschublade(Properties props) throws IOException
+	{
+		String port = props.getProperty("schublade.com", "auto").trim();
+		if (port.equalsIgnoreCase("aus"))
 		{
-			if (!Files.exists(Paths.get(KASSEN_KONFIG)))
-			{
-				return new Geldschublade("COM6", 9600, Geldschublade.STANDARD_BEFEHL);
-			}
-			Properties props = new Properties();
+			port = null;
+		}
+		else if (port.isEmpty() || port.equalsIgnoreCase("auto"))
+		{
+			port = ermittlePort();
+		}
+
+		try
+		{
+			int baud = Integer.parseInt(props.getProperty("schublade.baud", "9600").trim());
+			return new Geldschublade(port, baud, Geldschublade.STANDARD_BEFEHL);
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new IOException("Fehler in " + KASSEN_KONFIG + ": " + e.getMessage(), e);
+		}
+	}
+
+	private static String ermittlePort() throws IOException
+	{
+		List<String> ports = Geldschublade.findeSeriellePorts();
+		if (ports.isEmpty())
+		{
+			return null; // kein Port -> Simulationsmodus
+		}
+		if (ports.size() == 1)
+		{
+			return ports.get(0);
+		}
+		throw new IOException("Mehrere serielle Ports gefunden " + ports
+				+ ". Bitte schublade.com in " + KASSEN_KONFIG + " festlegen.");
+	}
+	
+	private static Properties ladeKonfig() throws IOException
+	{
+		Properties props = new Properties();
+		if (Files.exists(Paths.get(KASSEN_KONFIG)))
+		{
 			try (FileInputStream in = new FileInputStream(KASSEN_KONFIG))
 			{
 				props.load(in);
 			}
-			try
-			{
-				int baud = Integer.parseInt(props.getProperty("schublade.baud", "9600").trim());
-				return new Geldschublade(props.getProperty("schublade.com"), baud,
-						leseBefehl(props.getProperty("schublade.befehl")));
-			}
-			catch (IllegalArgumentException e)
-			{
-				throw new IOException("Fehler in " + KASSEN_KONFIG + ": " + e.getMessage(), e);
-			}
 		}
-		
-		// Befehl als Hex-Bytes, z. B. "1B 70 00 19 FA"; leer = ESC/POS-Standardbefehl
-		private static byte[] leseBefehl(String hex)
+		return props;
+	}
+
+	// waage.adresse = IP; fehlt sie, gibt es keine Waage
+	private static Waage erzeugeWaage(Properties pKonfig) throws IOException
+	{
+		String adresse = pKonfig.getProperty("waage.adresse", "").trim();
+		if (adresse.isEmpty())
 		{
-			if (hex == null || hex.trim().isEmpty())
-			{
-				return Geldschublade.STANDARD_BEFEHL;
-			}
-			String[] teile = hex.trim().split("[\\s,]+");
-			byte[] befehl = new byte[teile.length];
-			for (int i = 0; i < teile.length; i++)
-			{
-				befehl[i] = (byte) Integer.parseInt(teile[i], 16);
-			}
-			return befehl;
+			return null;
 		}
+		String port = pKonfig.getProperty("waage.port", "1122").trim();
+		try
+		{
+			return new Waage("http://" + adresse + ":" + port + WAAGE_PFAD);
+		}
+		catch (IllegalArgumentException e)
+		{
+			throw new IOException("Fehler in " + KASSEN_KONFIG + ": ungültige Waagen-Adresse \"" + adresse + "\"", e);
+		}
+	}
 		
 	public void buchePosition(String pEAN) throws SQLException {
 		dieTransaktion.buchePosition(derProduktSpeicher.laden(pEAN));
@@ -162,4 +196,51 @@ public class Steuerung {
 	public int ermittleTransaktionGroesse() {
 		return dieTransaktion.ermittleGroesse();
 	}
+
+	public boolean istGewichtsartikel(String pEAN) throws SQLException 
+	{
+	    String einheit = derProduktSpeicher.laden(pEAN).getBasiseinheit();
+	    return einheit != null && einheit.trim().equalsIgnoreCase("kg");
+	}
+	
+	public boolean istGewichtsposition(int pIndex) 
+	{
+	    String einheit = dieTransaktion.ermittleGebuchteEinheit(pIndex);
+	    return einheit != null && einheit.trim().equalsIgnoreCase("kg");
+	}
+
+	public BigDecimal leseGewicht() throws IOException, InterruptedException 
+	{
+	    double kg = waage.getGewicht();
+	    if (waage == null)
+	    {
+	    	throw new IllegalStateException("Keine Waage eingerichtet (waage.adresse in " + KASSEN_KONFIG + " fehlt).");
+	    }
+	    if (kg <= 0) 
+	    {
+	        throw new IllegalStateException("Kein Gewicht auf der Waage.");
+	    }
+	    return BigDecimal.valueOf(kg).setScale(3, RoundingMode.HALF_UP);
+	}
+
+	public int buchePositionMitGewicht(String pEAN, BigDecimal pKg) throws SQLException 
+	{
+	    Produkt produkt = derProduktSpeicher.laden(pEAN);
+
+	    for (int i = 0; i < dieTransaktion.ermittleGroesse(); i++) 
+	    {
+	        if (produkt.getEAN().equals(dieTransaktion.ermittleGebuchteProduktnummer(i))) 
+	        {
+	            BigDecimal neueMenge = dieTransaktion.ermittleGebuchteMenge(i).add(pKg);
+	            dieTransaktion.bearbeiteGebuchteMenge(i, neueMenge);
+	            return i;
+	        }
+	    }
+
+	    dieTransaktion.buchePosition(produkt);
+	    int index = dieTransaktion.ermittleGroesse() - 1;
+	    dieTransaktion.bearbeiteGebuchteMenge(index, pKg);
+	    return index;
+	}
+
 }
